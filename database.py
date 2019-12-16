@@ -12,8 +12,9 @@ time_quintuple_table = '''
         decimal_time DECIMAL(16,6) NOT NULL,
         src_mac VARCHAR(17) NOT NULL,
         dst_mac VARCHAR(17) NOT NULL,
-        src_ip VARCHAR(15) NOT NULL,
-        dst_ip VARCHAR(15) NOT NULL,
+        src_ip VARCHAR(23) NOT NULL,
+        dst_ip VARCHAR(23) NOT NULL,
+        ip_proto VARCHAE(10) NOT NULL,
         PRIMARY KEY (time_quintuple_id)
     );'''
 
