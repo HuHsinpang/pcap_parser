@@ -25,9 +25,9 @@ import database as db
 #                                                 Table of Contents                                                   #
 # =================================================================================================================== #
 
-# 1. 单线程函数:定义生产者,消费者功能                  (Line 40 to 65)
-# 2. 多线程函数:分配资源,启动多线程                    (Line 73 to 105)
-# 3. 主函数:配置文件路径,线程数等                      (Line 113 to 121)
+# 1. 单线程函数:定义生产者,消费者功能                  (Line 40 to 74)
+# 2. 多线程函数:分配资源,启动多线程                    (Line 82 to 117)
+# 3. 主函数:配置文件路径,线程数等                      (Line 124 to 135)
 
 
 # =================================================================================================================== #
@@ -52,9 +52,16 @@ def single_thread_pcap_ana(assigned_file_list, out_q, q_writer_lock):
                         if _packet.haslayer('IP'):
                             value = _packet.time, \
                                     _packet.src, _packet.dst, \
-                                    _packet["IP"].src, _packet["IP"].dst
+                                    _packet["IP"].src, _packet["IP"].dst, \
+                                    _packet.sprintf("%IP.proto%")
+                            if _packet.haslayer('TCP'):
+                                value += _packet["TCP"].sport, _packet["TCP"].dport
+                            elif _packet.haslayer('UDP'):
+                                value += _packet["UDP"].sport, _packet["UDP"].dport
                             with q_writer_lock:
                                 out_q.put(value)
+                        elif _packet.haslayer('IPv6'):
+                            print(_packet)
                 except IOError:
                     break
 
@@ -64,7 +71,7 @@ def single_thread_db_writer(in_q, db_conn, q_reader_lock):
     while not in_q.empty():
         with q_reader_lock:
             seq = in_q.get()
-            db_conn.db_table_insert(db.time_quintuple_insert, seq)
+            db_conn.db_table_insert(seq)
 
 
 # =================================================================================================================== #

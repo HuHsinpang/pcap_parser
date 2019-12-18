@@ -8,19 +8,18 @@ import pymysql
 # conflict, so we don't need to use lock to avoid the confusion of primary keys
 time_quintuple_table = '''
     CREATE TABLE time_quintuple_tbl(
-        time_quintuple_id INT NOT NULL AUTO_INCREMENT,
+        time_quintuple_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
         decimal_time DECIMAL(16,6) NOT NULL,
-        src_mac VARCHAR(17) NOT NULL,
-        dst_mac VARCHAR(17) NOT NULL,
-        src_ip VARCHAR(23) NOT NULL,
-        dst_ip VARCHAR(23) NOT NULL,
-        ip_proto VARCHAE(10) NOT NULL,
+        src_mac  VARCHAR(17) NOT NULL,
+        dst_mac  VARCHAR(17) NOT NULL,
+        src_ip   VARCHAR(15) NOT NULL,
+        dst_ip   VARCHAR(15) NOT NULL,
+        ip_proto VARCHAR(10) NOT NULL,
+        sport SMALLINT UNSIGNED,
+        dport SMALLINT UNSIGNED,
         PRIMARY KEY (time_quintuple_id)
     );'''
-
-time_quintuple_insert = '''INSERT INTO time_quintuple_tbl(decimal_time, src_mac, dst_mac, src_ip, dst_ip) VALUES 
-    (%f, '%s', '%s', '%s', '%s');'''
-
+    
 
 class DbCon(object):
 
@@ -58,12 +57,30 @@ class DbCon(object):
             print(e)
 
     # insert rows into tables
-    def db_table_insert(self, table_column, one_row_value):
+    def db_table_insert(self, one_row_value):
+        
+        time_quintuple_insert6 = '''INSERT INTO 
+            time_quintuple_tbl(decimal_time, src_mac, dst_mac, src_ip, dst_ip, ip_proto) 
+            VALUES 
+            (%f, '%s', '%s', '%s', '%s', '%s');'''
+        
+        time_quintuple_insert8 = '''INSERT INTO 
+            time_quintuple_tbl(decimal_time, src_mac, dst_mac, src_ip, dst_ip, ip_proto, sport, dport) 
+            VALUES 
+            (%f, '%s', '%s', '%s', '%s', '%s', %d, %d);'''
+        
+        time, mac_src, mac_dst, ip_src, ip_dst, proto, sport, dport = \
+            one_row_value[0], one_row_value[1], one_row_value[2], one_row_value[3], one_row_value[4], one_row_value[5], \
+            None, None
+        
         try:
-            time, mac_src, mac_dst, ip_src, ip_dst = \
-                one_row_value[0], one_row_value[1], one_row_value[2], one_row_value[3], one_row_value[4]
-            self._cursor.execute(table_column % (time, mac_src, mac_dst, ip_src, ip_dst))
+            if len(one_row_value) == 6:
+                self._cursor.execute(time_quintuple_insert6 % (time, mac_src, mac_dst, ip_src, ip_dst, proto))
+            elif len(one_row_value) == 8:
+                sport, dport = one_row_value[6], one_row_value[7]
+                self._cursor.execute(time_quintuple_insert8 % (time, mac_src, mac_dst, ip_src, ip_dst, proto, sport, dport))
+            else:
+                pass
             self._connection.commit()
-
         except Exception as e:
             print(e)
