@@ -40,30 +40,27 @@ import database as db
 # producer: single thread pcap parser
 def single_thread_pcap_ana(assigned_file_list, out_q, q_writer_lock):
     for file in assigned_file_list:
-        with scapy.PcapReader(file) as fades:
-            count = -1
-            while count != 0:
-                count -= 1
-                try:
-                    _packet = fades.read_packet()
-                    if _packet is None:
-                        break
-                    else:
-                        if _packet.haslayer('IP'):
-                            value = _packet.time, \
-                                    _packet.src, _packet.dst, \
-                                    _packet["IP"].src, _packet["IP"].dst, \
-                                    _packet.sprintf("%IP.proto%")
-                            if _packet.haslayer('TCP'):
-                                value += _packet["TCP"].sport, _packet["TCP"].dport
-                            elif _packet.haslayer('UDP'):
-                                value += _packet["UDP"].sport, _packet["UDP"].dport
+        try:
+            with scapy.rdpcap(file) as packets:
+                if packets is None:
+                    break
+                else:
+                    for packet in packets:
+                        if packet.haslayer('IP'):
+                            value = packet.time, \
+                                    packet.src, packet.dst, \
+                                    packet["IP"].src, packet["IP"].dst, \
+                                    packet.sprintf("%IP.proto%")
+                            if packet.haslayer('TCP'):
+                                value += packet["TCP"].sport, packet["TCP"].dport
+                            elif packet.haslayer('UDP'):
+                                value += packet["UDP"].sport, packet["UDP"].dport
                             with q_writer_lock:
                                 out_q.put(value)
-                        elif _packet.haslayer('IPv6'):
-                            print(_packet)
-                except IOError:
-                    break
+                        elif packet.haslayer('IPv6'):
+                            pass
+        except IOError:
+            break
 
 
 # consumer: single thread writer
