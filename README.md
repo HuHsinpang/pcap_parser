@@ -1,4 +1,5 @@
 # pcap_parser
+一个简单的多线程pcap解包程序，解析关键字段并存入mysql。基于python+scapy
 multithreading scapy based pcap parser. get time, mac_src, mac_dst, ip_src, ip_dst, ip_proto, sport, dport from pacp, then store them into mysql
 
 # pcap解析
